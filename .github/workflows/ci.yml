@@ -1,0 +1,27 @@
+name: ci
+on:
+  push: {branches: [main]}
+  pull_request:
+permissions: {contents: read}
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install yamllint==1.35.1 && yamllint k8s compose.yml .github
+      - run: docker build -t rag-lab-app .
+      - run: docker run --rm rag-lab-app python -m pytest -q tests
+  compose-e2e:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Postgres with pgvector, Redis, Neo4j, API and Celery worker
+        run: bash scripts/e2e.sh
+  kubernetes-e2e:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1
+        with: {install_only: true, version: v0.25.0}
+      - name: Deploy to kind and run the same check in-cluster
+        run: bash scripts/k8s-e2e.sh

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package ragplatform.v1;
+
+// Sent from the API to the Celery worker. Binary on the wire, base64 inside the Celery JSON envelope.
+message IngestJob {
+  string job_id = 1;
+  string source = 2;
+  string text = 3;
+  map<string, string> metadata = 4;
+}
+
+message IngestResult {
+  string job_id = 1;
+  int32 chunks = 2;
+  int32 redactions = 3;
+}

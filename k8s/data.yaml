@@ -1,0 +1,91 @@
+# Lab-grade data services with throwaway passwords. Use managed services and a secret store in real use.
+apiVersion: v1
+kind: Secret
+metadata: {name: lab-secrets}
+stringData:
+  DATABASE_URL: postgresql://rag:rag@postgres:5432/rag
+  REDIS_URL: redis://redis:6379/0
+  NEO4J_URI: bolt://neo4j:7687
+  NEO4J_PASSWORD: lab-password
+  API_TOKEN: lab-token
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: postgres}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector: {matchLabels: {app: postgres}}
+  template:
+    metadata: {labels: {app: postgres}}
+    spec:
+      containers:
+        - name: postgres
+          image: pgvector/pgvector:pg16
+          env:
+            - {name: POSTGRES_USER, value: rag}
+            - {name: POSTGRES_PASSWORD, value: rag}
+            - {name: POSTGRES_DB, value: rag}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          ports: [{containerPort: 5432}]
+          readinessProbe: {exec: {command: [pg_isready, -U, rag]}, periodSeconds: 3}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: postgres}
+spec: {selector: {app: postgres}, ports: [{port: 5432}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: redis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: redis}}
+  template:
+    metadata: {labels: {app: redis}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports: [{containerPort: 6379}]
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 3}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis}
+spec: {selector: {app: redis}, ports: [{port: 6379}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: neo4j}
+spec:
+  serviceName: neo4j
+  replicas: 1
+  selector: {matchLabels: {app: neo4j}}
+  template:
+    metadata: {labels: {app: neo4j}}
+    spec:
+      enableServiceLinks: false  # a Service named neo4j injects NEO4J_* variables that Neo4j reads as config and rejects
+      containers:
+        - name: neo4j
+          image: neo4j:5-community
+          env:
+            - {name: NEO4J_AUTH, value: neo4j/lab-password}
+            - {name: NEO4J_server_memory_heap_initial__size, value: 256m}
+            - {name: NEO4J_server_memory_heap_max__size, value: 256m}
+            - {name: NEO4J_server_memory_pagecache_size, value: 64m}
+          ports: [{containerPort: 7687}]
+          readinessProbe:
+            exec: {command: [cypher-shell, -u, neo4j, -p, lab-password, "RETURN 1"]}
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata: {name: neo4j}
+spec: {selector: {app: neo4j}, ports: [{port: 7687}]}

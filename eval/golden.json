@@ -1,0 +1,14 @@
+{
+  "documents": [
+    {"source": "cbt-insomnia.md", "text": "Cognitive behavioral therapy for insomnia, called CBT-I, is the first line treatment for chronic insomnia. It combines sleep restriction, stimulus control and thoughts about sleep. Patient contact: 619-555-0142, MRN: 00123456."},
+    {"source": "burnout.md", "text": "Burnout at work shows up as exhaustion, cynicism and reduced effectiveness. Manager check-ins, workload changes and time off are common first steps. Mindfulness practice can support recovery but does not replace changing the workload."},
+    {"source": "panic.md", "text": "Panic attacks peak within minutes and then fade. Breathing exercises and gradual exposure therapy reduce their frequency. Anxiety that returns after a panic attack is common and treatable with therapy."},
+    {"source": "sleep-hygiene.md", "text": "Sleep hygiene means a regular wake time, a dark cool room and no screens before bed. Good sleep habits help with insomnia and with depression, but they work best alongside therapy when symptoms are strong."}
+  ],
+  "questions": [
+    {"q": "What is the first line treatment for chronic insomnia?", "expect": "cbt-insomnia.md"},
+    {"q": "How does burnout show up and what are first steps?", "expect": "burnout.md"},
+    {"q": "What reduces how often panic attacks happen?", "expect": "panic.md"},
+    {"q": "Which sleep habits should I keep: screens, wake time, room?", "expect": "sleep-hygiene.md"}
+  ]
+}
